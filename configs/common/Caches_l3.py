@@ -62,7 +62,6 @@ class L1_DCache(L1Cache):
     pass
 
 class L2Cache(Cache):    
-    tags = eval('LRU()')
     assoc = 8
     hit_latency = 20
     write_latency = 100
@@ -72,8 +71,6 @@ class L2Cache(Cache):
     write_buffers = 8
 
 class L3Cache(Cache):   
-    
-    #tags = eval('CAR()')
     assoc = 32
     hit_latency = 20
     write_latency = 100
@@ -81,8 +78,6 @@ class L3Cache(Cache):
     mshrs = 512
     tgts_per_mshr = 20
     write_buffers = 256
-#    if tagtype == 1:    
-#    	tags = eval('CAR()') 
 
 class IOCache(Cache):
     assoc = 8

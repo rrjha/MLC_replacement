@@ -70,6 +70,15 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
         fatal("associativity must be greater than zero");
     }
 
+    writeSize = blkSize;
+    cout <<  name() <<": Default writeSize = " << writeSize << endl;
+    // If two step encoding is employed we need to build decision table
+    if(twostep) {
+		writeSize = 96; // Two step needs 50% extra space
+		cout <<  name() << ": Using two step with final writeSize = " << writeSize << endl;
+		//gen_decision_table();
+    }
+
     blkMask = blkSize - 1;
     setShift = floorLog2(blkSize);
     setMask = numSets - 1;

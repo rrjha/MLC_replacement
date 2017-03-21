@@ -93,6 +93,8 @@ class BaseSetAssoc : public BaseTags
     const unsigned numSets;
     /** Whether tags and data are accessed sequentially. */
     const bool sequentialAccess;
+    /** Allow flexible write size to accomodate encodings e.g. Two Step **/
+    unsigned writeSize;
 
     /** The cache sets. */
     SetType *sets;

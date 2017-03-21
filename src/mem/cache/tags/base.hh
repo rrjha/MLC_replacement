@@ -71,6 +71,21 @@ class BaseTags : public ClockedObject
     const unsigned size;
     /** The access latency of the cache. */
     const Cycles accessLatency;
+
+    /** Specify if Two Step encoding is employed for edurance of MLC */
+    const bool twostep;
+    /** Other constants for two step **/
+    /********************** Transition Energy ***********************
+          	From/To |   R00     R01     R10     R11
+         	--------------------------------------------
+          	R00     |   ZT      ST      TT      HT
+          	R01     |   ST      ZT      TT      HT
+          	R10     |   HT      TT      ZT      ST
+          	R11     |   HT      TT      ST      ZT
+    *********************************************************************/
+    enum {ZT, ST, HT, TT, MAX_TRANSITION};
+    const float energy[MAX_TRANSITION] = { /* ZT */ 0, /* ST */ 1.92, /* HT */ 3.192, /* TT */ 5.112 };
+
     /** Pointer to the parent cache. */
     BaseCache *cache;
 
