@@ -75,7 +75,7 @@ typedef Packet *PacketPtr;
 typedef uint8_t* PacketDataPtr;
 typedef std::list<PacketPtr> PacketList;
 extern void write_ts_encoded(byte *, const byte *, uint32);
-
+extern void read_ts_encoded(const byte *, byte *, uint32 ) ;
 class MemCmd
 {
     friend class Packet;
@@ -1027,17 +1027,21 @@ class Packet : public Printable
      * Copy data into the packet from the provided pointer.
      */
     void
-    setData(const uint8_t *p)
+    setData(const uint8_t *p, bool twostep)
     {
         // we should never be copying data onto itself, which means we
         // must idenfity packets with static data, as they carry the
         // same pointer from source to destination and back
         assert(p != getPtr<uint8_t>() || flags.isSet(STATIC_DATA));
 
-        if (p != getPtr<uint8_t>())
+        if (p != (getPtr<uint8_t>())) {
             // for packet with allocated dynamic data, we copy data from
             // one to the other, e.g. a forwarded response to a response
-            std::memcpy(getPtr<uint8_t>(), p, getSize());
+            if(!twostep)
+	           std::memcpy(getPtr<uint8_t>(), p, getSize());
+	     else
+		    read_ts_encoded(p, getPtr<uint8_t>(), getSize());
+        }
     }
 
     /**
@@ -1045,9 +1049,12 @@ class Packet : public Printable
      * which is aligned to the given block size.
      */
     void
-    setDataFromBlock(const uint8_t *blk_data, int blkSize)
+    setDataFromBlock(const uint8_t *blk_data, int blkSize, bool twostep)
     {
-        setData(blk_data + getOffset(blkSize));
+    	if(!twostep)
+	        setData(blk_data + getOffset(blkSize), twostep);
+	else
+	        setData(blk_data, twostep);
     }
 
     /**

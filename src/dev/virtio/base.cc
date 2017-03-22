@@ -424,7 +424,7 @@ VirtIODeviceBase::readConfigBlob(PacketPtr pkt, Addr cfgOffset, const uint8_t *c
         panic("Config read out of bounds.\n");
 
     pkt->makeResponse();
-    pkt->setData(const_cast<uint8_t *>(cfg) + cfgOffset);
+    pkt->setData(const_cast<uint8_t *>(cfg) + cfgOffset, false);
 }
 
 void

@@ -163,15 +163,15 @@ void decode (uint32 fromdata, uint16 *p_todata) {
     *p_todata = result;
 }
 
-void write_ts_encoded(byte *fromblk, const byte *toblk, uint32 toblksize) {
+void write_ts_encoded(byte *fromblk, const byte *toblk, uint32 blksize) {
     uint32 i=0, j=0;
-    for(i=0, j=0; i<=toblksize-2; i+=2, j+=3)
+    for(i=0, j=0; i<=blksize-2; i+=2, j+=3)
         encode((toblk[i] << 8 | toblk[i+1]), (uint32*)(fromblk+j));
 }
 
 void read_ts_encoded(const byte *fromblk, byte *toblk, uint32 blksize) {
     uint32 i=0, j=0;
-    for(i=0, j=0; i<=blksize + (blksize >>1) - 3 ; i+=3, j+=2)
+    for(i=0, j=0; i<=blksize + (blksize >>1) - 3 ; i+=3, j+=2) //Size of fromdata is 3/2 times of target so adjust size and then keep 3 space for pointer in loop
         decode((fromblk[i] << 16 | fromblk[i+1]<<8 | fromblk[i+2]), (uint16*)(toblk+j));
 }
 
