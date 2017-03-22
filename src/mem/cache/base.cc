@@ -60,13 +60,11 @@
 using namespace std;
 
 const float energy[MAX_TRANSITION] = { /* ZT */ 0, /* ST */ 1.92, /* HT */ 3.192, /* TT */ 5.112 };
-int8 codetab[4][3] =  { {   0, -1, -1   },
-                        {   1,  2,  4   },
-                        {   3,  5,  6   },
-                        {   7, -1, -1   }   };
-
-
+const int8 codetab[4][3] =	{ {   0, -1, -1   }, {   1,  2,  4   }, {   3,  5,  6   }, {   7, -1, -1   }   };
 dtab_entry decision_tab[64][16];
+
+/** Total Transitions **/
+Stats::Scalar totalTrans[MAX_TRANSITION];
 
 void find_energy_score(int8 from_code, int8 to_code, uint32 *transitions) {
     uint8 i, from_bits, to_bits;
@@ -134,7 +132,7 @@ void gen_table() {
     }
 }
 
-void encode(uint16 todata, uint32 *p_fromdata, unsigned long long *transitions) {
+void encode(uint16 todata, uint32 *p_fromdata) {
     uint32 i=0, j=0;
     uint32 result=0;
     dtab_entry temp;
@@ -142,16 +140,39 @@ void encode(uint16 todata, uint32 *p_fromdata, unsigned long long *transitions) 
     for(i=0; i<4; i++) {
         temp = decision_tab[((*p_fromdata >> 6*i) & 0x3F)][((todata >> 4*i) & 0xF)];
         result |= (temp.code << 6*i);
-        for(j=0; j < MAX_TRANSITION; j++)
-            transitions[j] += temp.transitions[j];
+        for(j=0; j < MAX_TRANSITION; j++) {
+		totalTrans[j] += temp.transitions[j];
+        }
     }
     *p_fromdata = result;
 }
 
-void write_ts_encoded(byte *fromblk, const byte *toblk, int toblksize, unsigned long long *transitions) {
+void decode (uint32 fromdata, uint16 *p_todata) {
+    int i=0;
+    uint16 result=0;
+    uint8 curr_three_bits = 0;
+    uint8 set_bits = 0;
+    for(i=0; i<8; i++) { // Loop in 8*3 bits
+        curr_three_bits = (fromdata >> ((7 - i) * 3)) & 7; //right shift and AND with 111 to get the three bits for this iter
+        while(curr_three_bits) { // find number of set bits for decoding this three bits to two actual bits
+            set_bits++;
+            curr_three_bits &= (curr_three_bits-1);
+        }
+        result = (result << 2) | set_bits; //append 2 bits to result
+    }
+    *p_todata = result;
+}
+
+void write_ts_encoded(byte *fromblk, const byte *toblk, uint32 toblksize) {
     uint32 i=0, j=0;
     for(i=0, j=0; i<=toblksize-2; i+=2, j+=3)
-        encode((toblk[i] << 8 | toblk[i+1]), (uint32*)(fromblk+j), transitions);
+        encode((toblk[i] << 8 | toblk[i+1]), (uint32*)(fromblk+j));
+}
+
+void read_ts_encoded(const byte *fromblk, byte *toblk, uint32 blksize) {
+    uint32 i=0, j=0;
+    for(i=0, j=0; i<=blksize + (blksize >>1) - 3 ; i+=3, j+=2)
+        decode((fromblk[i] << 16 | fromblk[i+1]<<8 | fromblk[i+2]), (uint16*)(toblk+j));
 }
 
 BaseCache::CacheSlavePort::CacheSlavePort(const std::string &_name,
@@ -192,6 +213,8 @@ BaseCache::BaseCache(const BaseCacheParams *p, unsigned blk_size)
 
     // forward snoops is overridden in init() once we can query
     // whether the connected master is actually snooping or not
+    if(twostep)
+		gen_table();
 }
 
 void
@@ -855,5 +878,38 @@ BaseCache::regStats()
     for (int i = 0; i < system->maxMasters(); i++) {
         overallAvgMshrUncacheableLatency.subname(i, system->getMasterName(i));
     }
-
+/*
+  	avgTrans[ZT]
+		.init(258)
+		.name(name() + ".avg_ZT")
+		.desc("Average number of ZTs");
+	avgTrans[ST]
+		.init(258)
+		.name(name() + ".avg_ST")
+		.desc("Average number of STs");
+	avgTrans[HT]
+		.init(258)
+		.name(name() + ".avg_HT")
+		.desc("Average number of HTs");
+	avgTrans[TT]
+		.init(258)
+		.name(name() + ".avg_TT")
+		.desc("Average number of TTs"); */
+				
+	totalTrans[ZT]
+		.name(name() + ".total_ZTs")
+		.desc("Total number of ZT")
+		.flags(total | nonan);
+	totalTrans[ST]
+		.name(name() + ".total_ST")
+		.desc("Total number of STs")
+		.flags(total | nonan);
+	totalTrans[HT]
+		.name(name() + ".total_HT")
+		.desc("Total number of HTs")
+		.flags(total | nonan);
+	totalTrans[TT]
+		.name(name() + ".total_TT")
+		.desc("Total number of TTs")
+		.flags(total | nonan);
 }

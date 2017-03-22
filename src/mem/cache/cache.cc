@@ -122,7 +122,7 @@ Cache::cmpAndSwap(CacheBlk *blk, PacketPtr pkt)
     overwrite_mem = true;
     // keep a copy of our possible write value, and copy what is at the
     // memory address into the packet
-    pkt->writeData((uint8_t *)&overwrite_val);
+    pkt->writeData((uint8_t *)&overwrite_val, twostep);
     pkt->setData(blk_data);
 
     if (pkt->req->isCondSwap()) {
@@ -173,7 +173,7 @@ Cache::satisfyCpuSideRequest(PacketPtr pkt, CacheBlk *blk,
         assert(blk->isWritable());
         // Write or WriteLine at the first cache with block in writable state
         if (blk->checkWrite(pkt)) {
-            pkt->writeDataToBlock(blk->data, blkSize);
+            pkt->writeDataToBlock(blk->data, blkSize, twostep);
         }
         // Always mark the line as dirty (and thus transition to the
         // Modified state) even if we are a failed StoreCond so we

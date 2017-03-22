@@ -79,8 +79,6 @@
 	typedef unsigned short uint16;
 	typedef unsigned int uint32;
 	typedef unsigned char byte;
-
-	/** Global info required for Two Step encoding **/
 	/********************** Transition Energy ***********************
 	From/To |   R00     R01     R10     R11
 	--------------------------------------------
@@ -90,14 +88,10 @@
 	R11     |   HT      TT      ST      ZT
 	*********************************************************************/
 	enum {ZT, ST, HT, TT, MAX_TRANSITION};
-
 	typedef struct decision_table_entry {
 	    uint8 code;
 	    uint32 transitions[MAX_TRANSITION];
 	}dtab_entry;
-
-	extern dtab_entry decision_tab[64][16];
-	extern void write_ts_encoded(byte *, const byte *, int, unsigned int *);
 
 /**
  * A basic cache interface. Implements some common functions for speed.
@@ -353,7 +347,9 @@ class BaseCache : public MemObject
      * Normally this is all possible memory addresses. */
     const AddrRangeList addrRanges;
 
+
   public:
+
     /** System we are currently operating in. */
     System *system;
 
@@ -482,6 +478,10 @@ class BaseCache : public MemObject
     Stats::Formula avgMshrUncacheableLatency[MemCmd::NUM_MEM_CMDS];
     /** The average overall latency of an MSHR miss. */
     Stats::Formula overallAvgMshrUncacheableLatency;
+
+    /** Transition stats **/
+    /** Average transitions **/
+    //Stats::AverageVector avgTrans[MAX_TRANSITION];
 
     /**
      * @}
@@ -638,7 +638,6 @@ class BaseCache : public MemObject
         hits[pkt->cmdToIndex()][pkt->req->masterId()]++;
 
     }
-
 };
 
 #endif //__MEM_CACHE_BASE_HH__

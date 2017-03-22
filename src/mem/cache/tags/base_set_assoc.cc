@@ -76,7 +76,6 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
     if(twostep) {
 		writeSize = 96; // Two step needs 50% extra space
 		cout <<  name() << ": Using two step with final writeSize = " << writeSize << endl;
-		//gen_decision_table();
     }
 
     blkMask = blkSize - 1;
@@ -90,7 +89,7 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
     blks = new BlkType[numSets * assoc];
     // allocate data storage in one big chunk
     numBlocks = numSets * assoc;
-    dataBlks = new uint8_t[numBlocks * blkSize];
+    dataBlks = new uint8_t[numBlocks * writeSize]; //Rakesh - Allocate for flexible writes with encoding
 	range = 4; // modified by Qi
     unsigned blkIndex = 0;       // index into blks array
     for (unsigned i = 0; i < numSets; ++i) {
@@ -103,7 +102,7 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
         for (unsigned j = 0; j < assoc; ++j) {
             // locate next cache block
             BlkType *blk = &blks[blkIndex];
-            blk->data = &dataBlks[blkSize*blkIndex];
+            blk->data = &dataBlks[writeSize*blkIndex]; //Rakesh - point correctly in mem for encoding
             std::memset(blk->data, 0, blkSize);
             ++blkIndex;
 
@@ -117,7 +116,7 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
             blk->tag = j;
             blk->whenReady = 0;
             blk->isTouched = false;
-            blk->size = blkSize;
+            blk->size = blkSize; //Rakesh - reporting this blksize should be okay but check
             sets[i].blks[j]=blk;
             blk->set = i;
             blk->way = j;

@@ -64,11 +64,17 @@
 #include "base/types.hh"
 #include "mem/request.hh"
 #include "sim/core.hh"
+	typedef char int8;
+	typedef unsigned char uint8;
+	typedef unsigned short uint16;
+	typedef unsigned int uint32;
+	typedef unsigned char byte;
 
 class Packet;
 typedef Packet *PacketPtr;
 typedef uint8_t* PacketDataPtr;
 typedef std::list<PacketPtr> PacketList;
+extern void write_ts_encoded(byte *, const byte *, uint32);
 
 class MemCmd
 {
@@ -1049,19 +1055,25 @@ class Packet : public Printable
      * is aligned to the given block size.
      */
     void
-    writeData(uint8_t *p) const
+    writeData(uint8_t *p, bool twostep) const
     {
-        std::memcpy(p, getConstPtr<uint8_t>(), getSize());
+    	if(!twostep)
+        	std::memcpy(p, getConstPtr<uint8_t>(), getSize());
+	else
+		write_ts_encoded(p, getConstPtr<uint8_t>(), getSize());
     }
 
     /**
      * Copy data from the packet to the memory at the provided pointer.
      */
     void
-    writeDataToBlock(uint8_t *blk_data, int blkSize) const
+    writeDataToBlock(uint8_t *blk_data, int blkSize, bool twostep) const
     {
-        writeData(blk_data + getOffset(blkSize));
-    }
+    	if(!twostep)
+        	writeData(blk_data + getOffset(blkSize), false);
+	else
+       	writeData(blk_data, true);
+   }
 
     /**
      * delete the data pointed to in the data pointer. Ok to call to
