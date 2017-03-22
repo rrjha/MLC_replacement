@@ -73,6 +73,32 @@
 #include "sim/sim_exit.hh"
 #include "sim/system.hh"
 
+
+	typedef char int8;
+	typedef unsigned char uint8;
+	typedef unsigned short uint16;
+	typedef unsigned int uint32;
+	typedef unsigned char byte;
+
+	/** Global info required for Two Step encoding **/
+	/********************** Transition Energy ***********************
+	From/To |   R00     R01     R10     R11
+	--------------------------------------------
+	R00     |   ZT      ST      TT      HT
+	R01     |   ST      ZT      TT      HT
+	R10     |   HT      TT      ZT      ST
+	R11     |   HT      TT      ST      ZT
+	*********************************************************************/
+	enum {ZT, ST, HT, TT, MAX_TRANSITION};
+
+	typedef struct decision_table_entry {
+	    uint8 code;
+	    uint32 transitions[MAX_TRANSITION];
+	}dtab_entry;
+
+	extern dtab_entry decision_tab[64][16];
+	extern void write_ts_encoded(byte *, const byte *, int, unsigned int *);
+
 /**
  * A basic cache interface. Implements some common functions for speed.
  */
@@ -192,6 +218,9 @@ class BaseCache : public MemObject
 
     /** Write/writeback buffer */
     WriteQueue writeBuffer;
+
+    /** Specify if Two Step encoding is employed for edurance of MLC */
+    const bool twostep;
 
     /**
      * Mark a request as in service (sent downstream in the memory

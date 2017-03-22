@@ -59,6 +59,101 @@
 
 using namespace std;
 
+const float energy[MAX_TRANSITION] = { /* ZT */ 0, /* ST */ 1.92, /* HT */ 3.192, /* TT */ 5.112 };
+int8 codetab[4][3] =  { {   0, -1, -1   },
+                        {   1,  2,  4   },
+                        {   3,  5,  6   },
+                        {   7, -1, -1   }   };
+
+
+dtab_entry decision_tab[64][16];
+
+void find_energy_score(int8 from_code, int8 to_code, uint32 *transitions) {
+    uint8 i, from_bits, to_bits;
+    for(i=0; i < 6; i+=2) {
+        from_bits = (from_code >> i) & 3;
+        to_bits = ((to_code >> i) & 3);
+        switch(from_bits) {
+            case 0:
+                (to_bits == 1) ? transitions[ST]++ :
+                (to_bits == 2) ? transitions[TT]++ :
+                (to_bits == 3) ? transitions[HT]++ : transitions[ZT]++;
+                break;
+            case 1:
+                (to_bits == 2) ? transitions[TT]++ :
+                (to_bits == 3) ? transitions[HT]++ :
+                (to_bits == 0) ? transitions[ST]++ : transitions[ZT]++;
+                break;
+            case 2:
+                (to_bits == 3) ? transitions[ST]++ :
+                (to_bits == 0) ? transitions[HT]++ :
+                (to_bits == 1) ? transitions[TT]++ : transitions[ZT]++;
+                break;
+            case 3:
+                (to_bits == 0) ? transitions[HT]++ :
+                (to_bits == 1) ? transitions[TT]++ :
+                (to_bits == 2) ? transitions[ST]++ : transitions[ZT]++;
+                break;
+        }
+    }
+}
+
+void gen_table() {
+    uint8 i, j, lo, hi, m, n, p, code;
+    uint32 transitions[MAX_TRANSITION];
+    float energy_score, least_energy_score;
+    dtab_entry chosen;
+
+    for(i=0; i<64; i++) {
+        for(j=0; j<16; j++) {
+            /* For each incoming 4bit dissect in two and generate 3 bit possible patterns
+             * for a total of max 9 6-bit patterns for this 4 bit */
+             lo = j & 3;
+             hi = ((j>>2) & 3);
+             code = 0;
+             memset(&chosen, 0, sizeof(dtab_entry));
+             least_energy_score = 3*energy[TT]; //max possible score to start with
+
+             for(m=0; (m < 3)&&(codetab[hi][m] != -1); m++) {
+                for(n=0; (n < 3)&&(codetab[lo][n] != -1); n++) {
+                    code = ((codetab[hi][m] << 3) | (codetab[lo][n])) & 0x3F;
+                    memset(transitions, 0, sizeof(uint32)*MAX_TRANSITION);
+                    find_energy_score(i, code, transitions);
+                    energy_score = transitions[ZT] * energy[ZT] + transitions[ST] * energy[ST] +
+                                    transitions[HT] * energy[HT] + transitions[TT] * energy[TT];
+                    if(energy_score < least_energy_score) {
+                        least_energy_score = energy_score;
+                        chosen.code = code;
+                        for(p=0; p < MAX_TRANSITION; p++)
+                            chosen.transitions[p] = transitions[p];
+                    }
+                }
+            }
+            decision_tab[i][j] = chosen;
+        }
+    }
+}
+
+void encode(uint16 todata, uint32 *p_fromdata, unsigned long long *transitions) {
+    uint32 i=0, j=0;
+    uint32 result=0;
+    dtab_entry temp;
+
+    for(i=0; i<4; i++) {
+        temp = decision_tab[((*p_fromdata >> 6*i) & 0x3F)][((todata >> 4*i) & 0xF)];
+        result |= (temp.code << 6*i);
+        for(j=0; j < MAX_TRANSITION; j++)
+            transitions[j] += temp.transitions[j];
+    }
+    *p_fromdata = result;
+}
+
+void write_ts_encoded(byte *fromblk, const byte *toblk, int toblksize, unsigned long long *transitions) {
+    uint32 i=0, j=0;
+    for(i=0, j=0; i<=toblksize-2; i+=2, j+=3)
+        encode((toblk[i] << 8 | toblk[i+1]), (uint32*)(fromblk+j), transitions);
+}
+
 BaseCache::CacheSlavePort::CacheSlavePort(const std::string &_name,
                                           BaseCache *_cache,
                                           const std::string &_label)
@@ -72,6 +167,7 @@ BaseCache::BaseCache(const BaseCacheParams *p, unsigned blk_size)
       cpuSidePort(nullptr), memSidePort(nullptr),
       mshrQueue("MSHRs", p->mshrs, 0, p->demand_mshr_reserve), // see below
       writeBuffer("write buffer", p->write_buffers, p->mshrs), // see below
+      twostep(p->two_step_encoding),
       blkSize(blk_size),
       lookupLatency(p->hit_latency),
       forwardLatency(p->hit_latency),

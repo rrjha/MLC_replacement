@@ -82,7 +82,8 @@ def config_cache(options, system):
     if options.l3cache:
     	system.l3=l3_cache_class(clk_domain=system.cpu_clk_domain,
                            size=options.l3_size,
-                           assoc=options.l3_assoc)
+                           assoc=options.l3_assoc,
+                           two_step_encoding = True)
         system.tol3bus=L3XBar(clk_domain = system.cpu_clk_domain)
         system.l3.cpu_side = system.tol3bus.master
         system.l3.mem_side = system.membus.slave
