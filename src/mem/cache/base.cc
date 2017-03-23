@@ -132,21 +132,6 @@ void gen_table() {
     }
 }
 
-void encode(uint16 todata, uint32 *p_fromdata) {
-    uint32 i=0, j=0;
-    uint32 result=0;
-    dtab_entry temp;
-
-    for(i=0; i<4; i++) {
-        temp = decision_tab[((*p_fromdata >> 6*i) & 0x3F)][((todata >> 4*i) & 0xF)];
-        result |= (temp.code << 6*i);
-        for(j=0; j < MAX_TRANSITION; j++) {
-		totalTrans[j] += temp.transitions[j];
-        }
-    }
-    *p_fromdata = result;
-}
-
 void decode (uint32 fromdata, uint16 *p_todata) {
     int i=0;
     uint16 result=0;
@@ -154,6 +139,7 @@ void decode (uint32 fromdata, uint16 *p_todata) {
     uint8 set_bits = 0;
     for(i=0; i<8; i++) { // Loop in 8*3 bits
         curr_three_bits = (fromdata >> ((7 - i) * 3)) & 7; //right shift and AND with 111 to get the three bits for this iter
+        set_bits = 0;
         while(curr_three_bits) { // find number of set bits for decoding this three bits to two actual bits
             set_bits++;
             curr_three_bits &= (curr_three_bits-1);
@@ -163,16 +149,34 @@ void decode (uint32 fromdata, uint16 *p_todata) {
     *p_todata = result;
 }
 
-void write_ts_encoded(byte *fromblk, const byte *toblk, uint32 blksize) {
+
+void encode(uint16 todata, uint32 *p_fromdata){
     uint32 i=0, j=0;
-    for(i=0, j=0; i<=blksize-2; i+=2, j+=3)
-        encode((toblk[i] << 8 | toblk[i+1]), (uint32*)(fromblk+j));
+    uint32 result= (*p_fromdata) & 0xFF000000; //retain MSB
+    dtab_entry temp;
+
+    for(i=0; i<4; i++) { //loop for 4 4-bit nibbles converting them using decision table
+        temp = decision_tab[((*p_fromdata >> 6*i) & 0x3F)][((todata >> 4*i) & 0xF)];
+        result |= (temp.code << 6*i);
+        for(j=0; j < MAX_TRANSITION; j++)
+            totalTrans[j] += temp.transitions[j];
+    }
+    *p_fromdata = result;
 }
 
-void read_ts_encoded(const byte *fromblk, byte *toblk, uint32 blksize) {
+void write_ts_encoded(byte *fromblk, const byte *toblk, uint32 blksize) {
+    uint32 i=0, j=0, residual = 0;
+    for(i=0, j=0; i<=blksize-4; i+=2, j+=3)
+        encode(*((uint16*)(toblk+i)), (uint32*)(fromblk+j));
+    residual |= ((*(fromblk+j+2) << 16) | (*(fromblk+j+1) << 8) | *(fromblk+j)); //last 3 bytes remain
+    encode(*((uint16*)(toblk+i)), (uint32*)&residual);
+    std::memcpy((fromblk+j), &residual, 3);
+}
+
+void read_ts_decoded(const byte *fromblk, byte *toblk, uint32 blksize) {
     uint32 i=0, j=0;
     for(i=0, j=0; i<=blksize + (blksize >>1) - 3 ; i+=3, j+=2) //Size of fromdata is 3/2 times of target so adjust size and then keep 3 space for pointer in loop
-        decode((fromblk[i] << 16 | fromblk[i+1]<<8 | fromblk[i+2]), (uint16*)(toblk+j));
+        decode(*((uint32*)(fromblk+i)) & 0x00FFFFFF, (uint16*)(toblk+j));
 }
 
 BaseCache::CacheSlavePort::CacheSlavePort(const std::string &_name,

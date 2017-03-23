@@ -75,7 +75,7 @@ typedef Packet *PacketPtr;
 typedef uint8_t* PacketDataPtr;
 typedef std::list<PacketPtr> PacketList;
 extern void write_ts_encoded(byte *, const byte *, uint32);
-extern void read_ts_encoded(const byte *, byte *, uint32 ) ;
+extern void read_ts_decoded(const byte *, byte *, uint32 ) ;
 class MemCmd
 {
     friend class Packet;
@@ -1040,7 +1040,7 @@ class Packet : public Printable
             if(!twostep)
 	           std::memcpy(getPtr<uint8_t>(), p, getSize());
 	     else
-		    read_ts_encoded(p, getPtr<uint8_t>(), getSize());
+		    read_ts_decoded(p, getPtr<uint8_t>(), getSize());
         }
     }
 
