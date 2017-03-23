@@ -64,18 +64,13 @@
 #include "base/types.hh"
 #include "mem/request.hh"
 #include "sim/core.hh"
-	typedef char int8;
-	typedef unsigned char uint8;
-	typedef unsigned short uint16;
-	typedef unsigned int uint32;
-	typedef unsigned char byte;
 
 class Packet;
 typedef Packet *PacketPtr;
 typedef uint8_t* PacketDataPtr;
 typedef std::list<PacketPtr> PacketList;
-extern void write_ts_encoded(byte *, const byte *, uint32);
-extern void read_ts_decoded(const byte *, byte *, uint32 ) ;
+extern void write_ts_encoded(uint8_t *, const uint8_t *, uint32_t);
+extern void read_ts_decoded(const uint8_t *, uint8_t *, uint32_t ) ;
 class MemCmd
 {
     friend class Packet;

@@ -74,11 +74,6 @@
 #include "sim/system.hh"
 
 
-	typedef char int8;
-	typedef unsigned char uint8;
-	typedef unsigned short uint16;
-	typedef unsigned int uint32;
-	typedef unsigned char byte;
 	/********************** Transition Energy ***********************
 	From/To |   R00     R01     R10     R11
 	--------------------------------------------
@@ -89,8 +84,8 @@
 	*********************************************************************/
 	enum {ZT, ST, HT, TT, MAX_TRANSITION};
 	typedef struct decision_table_entry {
-	    uint8 code;
-	    uint32 transitions[MAX_TRANSITION];
+	    uint8_t code;
+	    uint32_t transitions[MAX_TRANSITION];
 	}dtab_entry;
 
 /**
