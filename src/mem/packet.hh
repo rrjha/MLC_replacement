@@ -1049,7 +1049,7 @@ class Packet : public Printable
     	if(!twostep)
 	        setData(blk_data + getOffset(blkSize), twostep);
 	else
-	        setData(blk_data, twostep);
+	        setData(blk_data + ((getOffset(blkSize) >> 1)*3), twostep);
     }
 
     /**
@@ -1061,8 +1061,8 @@ class Packet : public Printable
     {
     	if(!twostep)
         	std::memcpy(p, getConstPtr<uint8_t>(), getSize());
-	else
-		write_ts_encoded(p, getConstPtr<uint8_t>(), getSize());
+		else
+			write_ts_encoded(p, getConstPtr<uint8_t>(), getSize());
     }
 
     /**
@@ -1073,8 +1073,8 @@ class Packet : public Printable
     {
     	if(!twostep)
         	writeData(blk_data + getOffset(blkSize), false);
-	else
-       	writeData(blk_data, true);
+		else
+			writeData(blk_data + ((getOffset(blkSize) >> 1)*3), true);
    }
 
     /**
