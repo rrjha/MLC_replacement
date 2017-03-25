@@ -131,6 +131,7 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
 BaseSetAssoc::~BaseSetAssoc()
 {
     delete [] dataBlks;
+    delete [] dataBlks2;
     delete [] blks;
     delete [] sets;
 }

@@ -101,7 +101,8 @@ void gen_table() {
     uint32_t transitions[MAX_TRANSITION];
     float energy_score, least_energy_score;
     dtab_entry chosen;
-    DPRINTF(CachePort, "Two step table generation called ");
+
+    cout << "Two step table generation called " <<endl;
 
     for(i=0; i<64; i++) {
         for(j=0; j<16; j++) {
@@ -138,6 +139,9 @@ void decode (uint32_t fromdata, uint16_t *p_todata) {
     uint16_t result=0;
     uint8_t curr_three_bits = 0;
     uint8_t set_bits = 0;
+
+    //cout << "Two step decode called " <<endl;
+
     for(i=0; i<8; i++) { // Loop in 8*3 bits
         curr_three_bits = (fromdata >> ((7 - i) * 3)) & 7; //right shift and AND with 111 to get the three bits for this iter
         set_bits = 0;
@@ -156,6 +160,8 @@ void encode(uint16_t todata, uint32_t *p_fromdata){
     uint32_t result= (*p_fromdata) & 0xFF000000; //retain MSB
     dtab_entry temp;
 
+    //cout << "Two step encode called " <<endl;
+
     for(i=0; i<4; i++) { //loop for 4 4-bit nibbles converting them using decision table
         temp = decision_tab[((*p_fromdata >> 6*i) & 0x3F)][((todata >> 4*i) & 0xF)];
         result |= (temp.code << 6*i);
@@ -167,7 +173,9 @@ void encode(uint16_t todata, uint32_t *p_fromdata){
 
 void write_ts_encoded(uint8_t *fromblk, const uint8_t *toblk, uint32_t blksize) {
     uint32_t i=0, j=0, residual = 0;
-    DPRINTF(CachePort, "Two step write request");
+
+    //cout << "Two step write  called " <<endl;
+
     for(i=0, j=0; i<=blksize-4; i+=2, j+=3)
         encode(*((uint16_t*)(toblk+i)), (uint32_t*)(fromblk+j));
     residual |= ((*(fromblk+j+2) << 16) | (*(fromblk+j+1) << 8) | *(fromblk+j)); //last 3 bytes remain
@@ -177,7 +185,9 @@ void write_ts_encoded(uint8_t *fromblk, const uint8_t *toblk, uint32_t blksize) 
 
 void read_ts_decoded(const uint8_t *fromblk, uint8_t *toblk, uint32_t blksize) {
     uint32_t i=0, j=0;
-    DPRINTF(CachePort, "Two step read request");
+
+    //cout << "Two step read  called " <<endl;
+
     for(i=0, j=0; i<=blksize + (blksize >>1) - 3 ; i+=3, j+=2) //Size of fromdata is 3/2 times of target so adjust size and then keep 3 space for pointer in loop
         decode(*((uint32_t*)(fromblk+i)) & 0x00FFFFFF, (uint16_t*)(toblk+j));
 }
