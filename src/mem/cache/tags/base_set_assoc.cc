@@ -103,7 +103,7 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
             // locate next cache block
             BlkType *blk = &blks[blkIndex];
             blk->data = &dataBlks[writeSize*blkIndex]; //Rakesh - point correctly in mem for encoding
-            std::memset(blk->data, 0, blkSize);
+            std::memset(blk->data, 0, writeSize);
             ++blkIndex;
 
             // invalidate new cache block

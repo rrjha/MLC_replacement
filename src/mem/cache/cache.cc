@@ -122,7 +122,7 @@ Cache::cmpAndSwap(CacheBlk *blk, PacketPtr pkt)
     overwrite_mem = true;
     // keep a copy of our possible write value, and copy what is at the
     // memory address into the packet
-    pkt->writeData((uint8_t *)&overwrite_val, twostep);
+    pkt->writeData((uint8_t *)&overwrite_val, false);
     pkt->setData(blk_data, twostep);
 
     if (pkt->req->isCondSwap()) {
@@ -1422,7 +1422,7 @@ Cache::recvTimingResp(PacketPtr pkt)
                     assert(pkt->getAddr() == tgt_pkt->getAddr());
                     assert(pkt->getSize() >= tgt_pkt->getSize());
 
-                    tgt_pkt->setData(pkt->getConstPtr<uint8_t>(), twostep);
+                    tgt_pkt->setData(pkt->getConstPtr<uint8_t>(), false);
                 }
             }
             tgt_pkt->makeTimingResponse();
