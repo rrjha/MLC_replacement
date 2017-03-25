@@ -101,6 +101,7 @@ void gen_table() {
     uint32_t transitions[MAX_TRANSITION];
     float energy_score, least_energy_score;
     dtab_entry chosen;
+    DPRINTF(CachePort, "Two step table generation called ");
 
     for(i=0; i<64; i++) {
         for(j=0; j<16; j++) {
@@ -166,6 +167,7 @@ void encode(uint16_t todata, uint32_t *p_fromdata){
 
 void write_ts_encoded(uint8_t *fromblk, const uint8_t *toblk, uint32_t blksize) {
     uint32_t i=0, j=0, residual = 0;
+    DPRINTF(CachePort, "Two step write request");
     for(i=0, j=0; i<=blksize-4; i+=2, j+=3)
         encode(*((uint16_t*)(toblk+i)), (uint32_t*)(fromblk+j));
     residual |= ((*(fromblk+j+2) << 16) | (*(fromblk+j+1) << 8) | *(fromblk+j)); //last 3 bytes remain
@@ -175,6 +177,7 @@ void write_ts_encoded(uint8_t *fromblk, const uint8_t *toblk, uint32_t blksize) 
 
 void read_ts_decoded(const uint8_t *fromblk, uint8_t *toblk, uint32_t blksize) {
     uint32_t i=0, j=0;
+    DPRINTF(CachePort, "Two step read request");
     for(i=0, j=0; i<=blksize + (blksize >>1) - 3 ; i+=3, j+=2) //Size of fromdata is 3/2 times of target so adjust size and then keep 3 space for pointer in loop
         decode(*((uint32_t*)(fromblk+i)) & 0x00FFFFFF, (uint16_t*)(toblk+j));
 }

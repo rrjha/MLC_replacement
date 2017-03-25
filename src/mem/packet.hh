@@ -70,7 +70,7 @@ typedef Packet *PacketPtr;
 typedef uint8_t* PacketDataPtr;
 typedef std::list<PacketPtr> PacketList;
 extern void write_ts_encoded(uint8_t *, const uint8_t *, uint32_t);
-extern void read_ts_decoded(const uint8_t *, uint8_t *, uint32_t ) ;
+//extern void read_ts_decoded(const uint8_t *, uint8_t *, uint32_t ) ;
 class MemCmd
 {
     friend class Packet;
@@ -1022,7 +1022,7 @@ class Packet : public Printable
      * Copy data into the packet from the provided pointer.
      */
     void
-    setData(const uint8_t *p, bool twostep)
+    setData(const uint8_t *p)
     {
         // we should never be copying data onto itself, which means we
         // must idenfity packets with static data, as they carry the
@@ -1032,10 +1032,7 @@ class Packet : public Printable
         if (p != (getPtr<uint8_t>())) {
             // for packet with allocated dynamic data, we copy data from
             // one to the other, e.g. a forwarded response to a response
-            if(!twostep)
-	           std::memcpy(getPtr<uint8_t>(), p, getSize());
-	     else
-		    read_ts_decoded(p, getPtr<uint8_t>(), getSize());
+	    std::memcpy(getPtr<uint8_t>(), p, getSize());
         }
     }
 
@@ -1044,12 +1041,9 @@ class Packet : public Printable
      * which is aligned to the given block size.
      */
     void
-    setDataFromBlock(const uint8_t *blk_data, int blkSize, bool twostep)
+    setDataFromBlock(const uint8_t *blk_data, int blkSize)
     {
-    	if(!twostep)
-	        setData(blk_data + getOffset(blkSize), twostep);
-	else
-	        setData(blk_data + ((getOffset(blkSize) >> 1)*3), twostep);
+        setData(blk_data + getOffset(blkSize));
     }
 
     /**
@@ -1059,9 +1053,8 @@ class Packet : public Printable
     void
     writeData(uint8_t *p, bool twostep) const
     {
-    	if(!twostep)
-        	std::memcpy(p, getConstPtr<uint8_t>(), getSize());
-	else
+        std::memcpy(p, getConstPtr<uint8_t>(), getSize());
+    	if(twostep)
 		write_ts_encoded(p, getConstPtr<uint8_t>(), getSize());
     }
 
@@ -1069,12 +1062,11 @@ class Packet : public Printable
      * Copy data from the packet to the memory at the provided pointer.
      */
     void
-    writeDataToBlock(uint8_t *blk_data, int blkSize, bool twostep) const
+    writeDataToBlock(uint8_t *blk_data, uint8_t *blk_data2, int blkSize) const
     {
-    	if(!twostep)
-        	writeData(blk_data + getOffset(blkSize), false);
-	else
-		writeData(blk_data + ((getOffset(blkSize) >> 1)*3), true);
+        writeData(blk_data + getOffset(blkSize), false);
+    	if(blk_data2 != NULL)
+		writeData(blk_data2 + ((getOffset(blkSize) >> 1)*3), true);
    }
 
     /**

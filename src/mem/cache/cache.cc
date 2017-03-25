@@ -123,7 +123,7 @@ Cache::cmpAndSwap(CacheBlk *blk, PacketPtr pkt)
     // keep a copy of our possible write value, and copy what is at the
     // memory address into the packet
     pkt->writeData((uint8_t *)&overwrite_val, false);
-    pkt->setData(blk_data, twostep);
+    pkt->setData(blk_data);
 
     if (pkt->req->isCondSwap()) {
         if (pkt->getSize() == sizeof(uint64_t)) {
@@ -173,7 +173,7 @@ Cache::satisfyCpuSideRequest(PacketPtr pkt, CacheBlk *blk,
         assert(blk->isWritable());
         // Write or WriteLine at the first cache with block in writable state
         if (blk->checkWrite(pkt)) {
-            pkt->writeDataToBlock(blk->data, blkSize, twostep);
+            pkt->writeDataToBlock(blk->data, blk->data2, blkSize);
         }
         // Always mark the line as dirty (and thus transition to the
         // Modified state) even if we are a failed StoreCond so we
@@ -189,7 +189,7 @@ Cache::satisfyCpuSideRequest(PacketPtr pkt, CacheBlk *blk,
 
         // all read responses have a data payload
         assert(pkt->hasRespData());
-        pkt->setDataFromBlock(blk->data, blkSize, twostep);
+        pkt->setDataFromBlock(blk->data, blkSize);
 
         // determine if this read is from a (coherent) cache, or not
         // by looking at the command type; we could potentially add a
@@ -1422,7 +1422,7 @@ Cache::recvTimingResp(PacketPtr pkt)
                     assert(pkt->getAddr() == tgt_pkt->getAddr());
                     assert(pkt->getSize() >= tgt_pkt->getSize());
 
-                    tgt_pkt->setData(pkt->getConstPtr<uint8_t>(), false);
+                    tgt_pkt->setData(pkt->getConstPtr<uint8_t>());
                 }
             }
             tgt_pkt->makeTimingResponse();
@@ -1862,7 +1862,7 @@ Cache::doTimingSupplyResponse(PacketPtr req_pkt, const uint8_t *blk_data,
            pkt->hasSharers());
     pkt->makeTimingResponse();
     if (pkt->isRead()) {
-        pkt->setDataFromBlock(blk_data, blkSize, twostep);
+        pkt->setDataFromBlock(blk_data, blkSize);
     }
     if (pkt->cmd == MemCmd::ReadResp && pending_inval) {
         // Assume we defer a response to a read from a far-away cache
@@ -2058,7 +2058,7 @@ Cache::handleSnoop(PacketPtr pkt, CacheBlk *blk, bool is_timing,
             // packets such as upgrades do not actually have any data
             // payload
             if (pkt->hasData())
-                pkt->setDataFromBlock(blk->data, blkSize, twostep);
+                pkt->setDataFromBlock(blk->data, blkSize);
         }
     }
 

@@ -105,7 +105,8 @@ class BaseSetAssoc : public BaseTags
     int range;
     /** The data blocks, 1 per cache block. */
     uint8_t *dataBlks;
-    
+    //Rakesh - additional data block for two state
+    uint8_t *dataBlks2;
     /** The amount to shift the address to get the set. */
     int setShift;
     /** The amount to shift the address to get the tag. */

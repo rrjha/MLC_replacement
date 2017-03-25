@@ -89,7 +89,8 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
     blks = new BlkType[numSets * assoc];
     // allocate data storage in one big chunk
     numBlocks = numSets * assoc;
-    dataBlks = new uint8_t[numBlocks * writeSize]; //Rakesh - Allocate for flexible writes with encoding
+    dataBlks = new uint8_t[numBlocks * blkSize];
+    dataBlks2 = new uint8_t[numBlocks * writeSize]; //Rakesh - Allocate for two step writes with encoding
 	range = 4; // modified by Qi
     unsigned blkIndex = 0;       // index into blks array
     for (unsigned i = 0; i < numSets; ++i) {
@@ -102,8 +103,10 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
         for (unsigned j = 0; j < assoc; ++j) {
             // locate next cache block
             BlkType *blk = &blks[blkIndex];
-            blk->data = &dataBlks[writeSize*blkIndex]; //Rakesh - point correctly in mem for encoding
-            std::memset(blk->data, 0, writeSize);
+            blk->data = &dataBlks[blkSize*blkIndex]; 
+            blk->data2= &dataBlks2[writeSize*blkIndex]; //Rakesh - point correctly in mem for encoding
+            std::memset(blk->data, 0, blkSize);
+            std::memset(blk->data2, 0, writeSize);
             ++blkIndex;
 
             // invalidate new cache block
@@ -116,7 +119,8 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
             blk->tag = j;
             blk->whenReady = 0;
             blk->isTouched = false;
-            blk->size = blkSize; //Rakesh - reporting this blksize should be okay but check
+            blk->size = blkSize;
+	    blk->size2 = writeSize; // Rakesh - Not sure if we need it anytime later
             sets[i].blks[j]=blk;
             blk->set = i;
             blk->way = j;
