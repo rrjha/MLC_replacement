@@ -64,7 +64,7 @@ const int8_t codetab[4][3] =	{ {   0, -1, -1   }, {   1,  2,  4   }, {   3,  5, 
 dtab_entry decision_tab[64][16];
 
 /** Total Transitions **/
-Stats::Scalar totalTrans[MAX_TRANSITION];
+Stats::Scalar BaseCache::totalTrans[MAX_TRANSITION];
 
 void find_energy_score(int8_t from_code, int8_t to_code, uint32_t *transitions) {
     uint8_t i, from_bits, to_bits;
@@ -166,7 +166,7 @@ void encode(uint16_t todata, uint32_t *p_fromdata){
         temp = decision_tab[((*p_fromdata >> 6*i) & 0x3F)][((todata >> 4*i) & 0xF)];
         result |= (temp.code << 6*i);
         for(j=0; j < MAX_TRANSITION; j++)
-            totalTrans[j] += temp.transitions[j];
+           BaseCache::totalTrans[j] += temp.transitions[j];
     }
     *p_fromdata = result;
 }
@@ -914,8 +914,8 @@ BaseCache::regStats()
 		.desc("Average number of TTs"); */
 				
 	totalTrans[ZT]
-		.name(name() + ".total_ZTs")
-		.desc("Total number of ZT")
+		.name(name() + ".total_ZT")
+		.desc("Total number of ZTs")
 		.flags(total | nonan);
 	totalTrans[ST]
 		.name(name() + ".total_ST")
