@@ -98,15 +98,17 @@ class BaseSetAssoc : public BaseTags
 
     /** The cache sets. */
     SetType *sets;
-  
+
     /** The cache blocks. */
     BlkType *blks;
     PacketPtr tempPktPtr; // add by Qi for new block value
     int range;
     /** The data blocks, 1 per cache block. */
     uint8_t *dataBlks;
+
     //Rakesh - additional data block for two state
     uint8_t *dataBlks2;
+
     /** The amount to shift the address to get the set. */
     int setShift;
     /** The amount to shift the address to get the tag. */
@@ -253,7 +255,7 @@ public:
      * @param pkt Packet holding the address to update
      * @param blk The block to update.
      */
-    void storeTempPkt(PacketPtr pkt) { 
+    void storeTempPkt(PacketPtr pkt) {
 		tempPktPtr = pkt;
 	}
 
@@ -279,7 +281,7 @@ public:
 
         return blk;
     }
-    
+
 
     /**
      * Insert the new block into the cache.

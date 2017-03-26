@@ -72,21 +72,7 @@
 #include "sim/full_system.hh"
 #include "sim/sim_exit.hh"
 #include "sim/system.hh"
-
-
-	/********************** Transition Energy ***********************
-	From/To |   R00     R01     R10     R11
-	--------------------------------------------
-	R00     |   ZT      ST      TT      HT
-	R01     |   ST      ZT      TT      HT
-	R10     |   HT      TT      ZT      ST
-	R11     |   HT      TT      ST      ZT
-	*********************************************************************/
-	enum {ZT, ST, HT, TT, MAX_TRANSITION};
-	typedef struct decision_table_entry {
-	    uint8_t code;
-	    uint32_t transitions[MAX_TRANSITION];
-	}dtab_entry;
+#include "mem/cache/two_step.hh"
 
 /**
  * A basic cache interface. Implements some common functions for speed.
@@ -291,18 +277,18 @@ class BaseCache : public MemObject
 
     /** The latency to fill a cache block */
     const Cycles fillLatency;
-    
+
 	/** The latency of a write in this device.
      */
     const Cycles writeLatency;
-    
+
     /**
      * The latency of sending reponse to its upper level cache/core on
      * a linefill. The responseLatency parameter captures this
      * latency.
      */
     const Cycles responseLatency;
-    
+
 
 
     /** The number of targets for each MSHR. */
@@ -341,6 +327,9 @@ class BaseCache : public MemObject
      * The address range to which the cache responds on the CPU side.
      * Normally this is all possible memory addresses. */
     const AddrRangeList addrRanges;
+
+  private:
+    two_step *m_ts;
 
 
   public:
@@ -413,7 +402,7 @@ class BaseCache : public MemObject
     Stats::Scalar unusedPrefetches;
 
     /** Total Transitions **/
-    static Stats::Scalar totalTrans[];
+    Stats::Scalar totalTrans[MAX_TRANSITION];
 
     /** Number of blocks written back per thread. */
     Stats::Vector writebacks;
@@ -492,7 +481,7 @@ class BaseCache : public MemObject
 
   public:
     BaseCache(const BaseCacheParams *p, unsigned blk_size);
-    ~BaseCache() {}
+    ~BaseCache() { delete m_ts; }
 
     virtual void init();
 

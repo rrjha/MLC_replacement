@@ -96,9 +96,11 @@ class CacheBlk
     uint8_t *data;
     /** the number of bytes stored in this block. */
     unsigned size;
+
     // Rakesh - Additional blk for two step;
     uint8_t *data2;
     unsigned size2;
+
 
     /** block state: OR of CacheBlkStatusBit */
     typedef unsigned State;

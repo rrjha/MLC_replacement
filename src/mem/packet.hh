@@ -64,13 +64,13 @@
 #include "base/types.hh"
 #include "mem/request.hh"
 #include "sim/core.hh"
+#include "mem/cache/two_step.hh"
 
 class Packet;
 typedef Packet *PacketPtr;
 typedef uint8_t* PacketDataPtr;
 typedef std::list<PacketPtr> PacketList;
-extern void write_ts_encoded(uint8_t *, const uint8_t *, uint32_t);
-//extern void read_ts_decoded(const uint8_t *, uint8_t *, uint32_t ) ;
+
 class MemCmd
 {
     friend class Packet;
@@ -1055,7 +1055,7 @@ class Packet : public Printable
     {
         std::memcpy(p, getConstPtr<uint8_t>(), getSize());
     	if(twostep)
-		write_ts_encoded(p, getConstPtr<uint8_t>(), getSize());
+            two_step::write_ts_encoded(p, getConstPtr<uint8_t>(), getSize());
     }
 
     /**
@@ -1065,8 +1065,12 @@ class Packet : public Printable
     writeDataToBlock(uint8_t *blk_data, uint8_t *blk_data2, int blkSize) const
     {
         writeData(blk_data + getOffset(blkSize), false);
-    	if(blk_data2 != NULL)
-		writeData(blk_data2 + ((getOffset(blkSize) >> 1)*3), true);
+
+    	if(blk_data2 != NULL) {
+            //cout << "entering danger zone" << endl;
+            writeData(blk_data2/* + ((getOffset(blkSize) >> 1)*3)*/, true);
+        }
+
    }
 
     /**
