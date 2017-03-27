@@ -124,11 +124,12 @@ void two_step::encode(uint16_t todata, uint32_t *p_fromdata){
 }
 
 void two_step::write_ts_encoded(uint8_t *fromblk, const uint8_t *toblk, uint32_t blksize) {
-   uint32_t i=0, j=0, residual = 0;
+   int32_t i=0, j=0;
+   uint32_t residual = 0;
 
     //cout << "Two step write  called " <<endl;
 
-    for(i=0, j=0; i<=blksize-4; i+=2, j+=3)
+    for(i=0, j=0; i< (blksize-2); i+=2, j+=3)
         encode(*((uint16_t*)(toblk+i)), (uint32_t*)(fromblk+j));
     residual |= ((*(fromblk+j+2) << 16) | (*(fromblk+j+1) << 8) | *(fromblk+j)); //last 3 bytes remain
     encode(*((uint16_t*)(toblk+i)), (uint32_t*)&residual);
@@ -140,7 +141,7 @@ void two_step::read_ts_decoded(const uint8_t *fromblk, uint8_t *toblk, uint32_t 
 
     //cout << "Two step read  called " <<endl;
 
-    for(i=0, j=0; i<=blksize + (blksize >>1) - 3 ; i+=3, j+=2) //Size of fromdata is 3/2 times of target so adjust size and then keep 3 space for pointer in loop
+    for(i=0, j=0; i < (blksize + (blksize >>1)); i+=3, j+=2) //Size of fromdata is 3/2 times of target so adjust size and then keep 3 space for pointer in loop
         decode(*((uint32_t*)(fromblk+i)) & 0x00FFFFFF, (uint16_t*)(toblk+j));
 }
 
