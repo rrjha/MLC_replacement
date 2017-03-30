@@ -437,6 +437,13 @@ Cache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
         // nothing else to do; writeback doesn't expect response
         assert(!pkt->needsResponse());
         std::memcpy(blk->data, pkt->getConstPtr<uint8_t>(), blkSize);
+        if(twostep) {
+            DPRINTF(CacheVerbose, "%s with two-step encoding for %s addr %#llx size %d\n",
+            __func__, pkt->cmdString(), pkt->getAddr(), pkt->getSize());
+
+            m_ts->write_ts_encoded(blk->data2, pkt->getConstPtr<uint8_t>(), blkSize);
+        }
+
         DPRINTF(Cache, "%s new state is %s\n", __func__, blk->print());
         incHitCount(pkt);
         return true;
