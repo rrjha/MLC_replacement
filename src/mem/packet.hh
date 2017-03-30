@@ -64,7 +64,6 @@
 #include "base/types.hh"
 #include "mem/request.hh"
 #include "sim/core.hh"
-#include "mem/cache/two_step.hh"
 
 class Packet;
 typedef Packet *PacketPtr;
@@ -1029,11 +1028,10 @@ class Packet : public Printable
         // same pointer from source to destination and back
         assert(p != getPtr<uint8_t>() || flags.isSet(STATIC_DATA));
 
-        if (p != (getPtr<uint8_t>())) {
+        if (p != getPtr<uint8_t>())
             // for packet with allocated dynamic data, we copy data from
             // one to the other, e.g. a forwarded response to a response
-	    std::memcpy(getPtr<uint8_t>(), p, getSize());
-        }
+            std::memcpy(getPtr<uint8_t>(), p, getSize());
     }
 
     /**
@@ -1051,27 +1049,19 @@ class Packet : public Printable
      * is aligned to the given block size.
      */
     void
-    writeData(uint8_t *p, bool twostep) const
+    writeData(uint8_t *p) const
     {
         std::memcpy(p, getConstPtr<uint8_t>(), getSize());
-    	if(twostep)
-            two_step::write_ts_encoded(p, getConstPtr<uint8_t>(), getSize());
     }
 
     /**
      * Copy data from the packet to the memory at the provided pointer.
      */
     void
-    writeDataToBlock(uint8_t *blk_data, uint8_t *blk_data2, int blkSize) const
+    writeDataToBlock(uint8_t *blk_data, int blkSize) const
     {
-        writeData(blk_data + getOffset(blkSize), false);
-
-    	if(blk_data2 != NULL) {
-            //cout << "entering danger zone" << endl;
-            writeData(blk_data2/* + ((getOffset(blkSize) >> 1)*3)*/, true);
-        }
-
-   }
+        writeData(blk_data + getOffset(blkSize));
+    }
 
     /**
      * delete the data pointed to in the data pointer. Ok to call to

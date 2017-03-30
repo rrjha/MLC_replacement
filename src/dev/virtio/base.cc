@@ -436,7 +436,7 @@ VirtIODeviceBase::writeConfigBlob(PacketPtr pkt, Addr cfgOffset, uint8_t *cfg)
         panic("Config write out of bounds.\n");
 
     pkt->makeResponse();
-    pkt->writeData((uint8_t *)cfg + cfgOffset, false);
+    pkt->writeData((uint8_t *)cfg + cfgOffset);
 }
 
 

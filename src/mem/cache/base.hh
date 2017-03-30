@@ -196,6 +196,7 @@ class BaseCache : public MemObject
 
     /** Specify if Two Step encoding is employed for edurance of MLC */
     const bool twostep;
+    two_step *m_ts;
 
     /**
      * Mark a request as in service (sent downstream in the memory
@@ -327,10 +328,6 @@ class BaseCache : public MemObject
      * The address range to which the cache responds on the CPU side.
      * Normally this is all possible memory addresses. */
     const AddrRangeList addrRanges;
-
-  private:
-    two_step *m_ts;
-
 
   public:
 
@@ -624,6 +621,11 @@ class BaseCache : public MemObject
         assert(pkt->req->masterId() < system->maxMasters());
         hits[pkt->cmdToIndex()][pkt->req->masterId()]++;
 
+    }
+
+    bool is_two_step()
+    {
+        return twostep;
     }
 };
 

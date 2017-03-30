@@ -122,7 +122,7 @@ Cache::cmpAndSwap(CacheBlk *blk, PacketPtr pkt)
     overwrite_mem = true;
     // keep a copy of our possible write value, and copy what is at the
     // memory address into the packet
-    pkt->writeData((uint8_t *)&overwrite_val, false);
+    pkt->writeData((uint8_t *)&overwrite_val/*, false*/);
     pkt->setData(blk_data);
 
     if (pkt->req->isCondSwap()) {
@@ -173,7 +173,12 @@ Cache::satisfyCpuSideRequest(PacketPtr pkt, CacheBlk *blk,
         assert(blk->isWritable());
         // Write or WriteLine at the first cache with block in writable state
         if (blk->checkWrite(pkt)) {
-            pkt->writeDataToBlock(blk->data, blk->data2, blkSize);
+            pkt->writeDataToBlock(blk->data,/* blk->data2,*/ blkSize);
+            if(twostep) {
+                DPRINTF(CacheVerbose, "%s with two-step write for %s addr %#llx size %d (write)\n",
+                __func__, pkt->cmdString(), pkt->getAddr(), pkt->getSize());
+                m_ts->write_ts_encoded(blk->data2, pkt->getConstPtr<uint8_t>(), blkSize);
+            }
         }
         // Always mark the line as dirty (and thus transition to the
         // Modified state) even if we are a failed StoreCond so we
@@ -1734,7 +1739,7 @@ Cache::handleFill(PacketPtr pkt, CacheBlk *blk, PacketList &writebacks,
     // When handling a fill, we should have no writes to this line.
     assert(addr == blockAlign(addr));
     assert(!writeBuffer.findMatch(addr, is_secure));
-	
+
     if (blk == nullptr) {
         // better have read new data...
         assert(pkt->hasData());
@@ -1824,6 +1829,12 @@ Cache::handleFill(PacketPtr pkt, CacheBlk *blk, PacketList &writebacks,
         assert(pkt->getSize() == blkSize);
 
         std::memcpy(blk->data, pkt->getConstPtr<uint8_t>(), blkSize);
+        if(twostep) {
+            DPRINTF(CacheVerbose, "%s with two-step encoding for %s addr %#llx size %d\n",
+            __func__, pkt->cmdString(), pkt->getAddr(), pkt->getSize());
+
+            m_ts->write_ts_encoded(blk->data2, pkt->getConstPtr<uint8_t>(), blkSize);
+        }
     }
     // We pay for fillLatency here.
     blk->whenReady = clockEdge() + fillLatency * clockPeriod() +

@@ -19,8 +19,8 @@
 
 
 ############ DIRECTORY VARIABLES: MODIFY ACCORDINGLY #############
-GEM5_DIR=/home/group/Documents/gem5                          # Install location of gem5
-SPEC_DIR=/home/group/cpu2006                 # Install location of your SPEC2006 benchmarks
+GEM5_DIR=/home/rakesh/gem5-new/MLC_replacement	# Install location of gem5
+SPEC_DIR=/home/rakesh/SPEC			# Install location of your SPEC2006 benchmarks
 ##################################################################
 
 ARGC=$# # Get number of arguments excluding arg0 (the script itself). Check for help message condition.
@@ -190,7 +190,8 @@ if [[ !(-d "$OUTPUT_DIR") ]]; then
     exit 1
 fi
 
-RUN_DIR=$SPEC_DIR/benchspec/CPU2006/$BENCHMARK_CODE/run/run_base_ref\_my-alpha.0000     # Run directory for the selected SPEC benchmark
+#RUN_DIR=$SPEC_DIR/benchspec/CPU2006/$BENCHMARK_CODE/run/run_base_ref\_my-alpha.0000     # Run directory for the selected SPEC benchmark
+RUN_DIR=$SPEC_DIR/benchspec/CPU2006/$BENCHMARK_CODE/run/run_base_ref\_gcc43-64bit.0000     # Run directory for the selected SPEC benchmark
 SCRIPT_OUT=$OUTPUT_DIR/runscript.log                                                                   # File log for this script's stdout henceforth
 
 ################## REPORT SCRIPT CONFIGURATION ###################
@@ -219,4 +220,6 @@ echo "" | tee -a $SCRIPT_OUT
 echo "" | tee -a $SCRIPT_OUT
 
 # Actually launch gem5!
-$GEM5_DIR/build/ALPHA/gem5.opt --outdir=$OUTPUT_DIR $GEM5_DIR/configs/example/spec06_config_single.py --benchmark=$BENCHMARK --maxinsts=2000000000 --benchmark_stdout=$OUTPUT_DIR/$BENCHMARK.out --benchmark_stderr=$OUTPUT_DIR/$BENCHMARK.err --caches --l1i_size=32kB --l1d_size=32kB --l2cache --l2_size=4MB --l2_assoc=32| tee -a $SCRIPT_OUT
+#$GEM5_DIR/build/ALPHA/gem5.opt --outdir=$OUTPUT_DIR $GEM5_DIR/configs/example/spec06_config_single.py --benchmark=$BENCHMARK --maxinsts=2000000000 --benchmark_stdout=$OUTPUT_DIR/$BENCHMARK.out --benchmark_stderr=$OUTPUT_DIR/$BENCHMARK.err --caches --l1i_size=32kB --l1d_size=32kB --l2cache --l2_size=4MB --l2_assoc=32| tee -a $SCRIPT_OUT
+
+$GEM5_DIR/build/ALPHA/gem5.debug --debug-flags=Cache,CacheVerbose --outdir=$OUTPUT_DIR/$BENCHMARK $GEM5_DIR/configs/example/spec06_config_single.py --benchmark=$BENCHMARK --cpu-type=TimingSimpleCPU --cpu-clock=3.2GHz --mem-size=4GB --mem-channels=2 --mem-type=DDR3_1600_8x8 --caches --l1i_size=32kB --l1i_assoc=8 --l1d_size=32kB --l1d_assoc=8 --l2cache --l2_size=256kB --l2_assoc=8 --l3cache --l3_size=8MB --l3_assoc=32 --fast-forward=$WARM_LEN --maxinsts=$RUN_LEN

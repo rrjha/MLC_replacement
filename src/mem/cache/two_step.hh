@@ -25,7 +25,7 @@ class two_step
     public:
         two_step(Stats::Scalar *);
         virtual ~two_step();
-        static void write_ts_encoded(uint8_t *, const uint8_t *, uint32_t);
+        void write_ts_encoded(uint8_t *, const uint8_t *, uint32_t);
 
     private:
 

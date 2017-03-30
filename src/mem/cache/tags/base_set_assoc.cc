@@ -71,12 +71,9 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
     }
 
     writeSize = blkSize;
-    cout <<  name() <<": Default writeSize = " << writeSize << endl;
     // If two step encoding is employed we need to build decision table
-    if(twostep) {
+    if(twostep)
 		writeSize = 96; // Two step needs 50% extra space
-		cout <<  name() << ": Using two step with final writeSize = " << writeSize << endl;
-    }
 
     blkMask = blkSize - 1;
     setShift = floorLog2(blkSize);
@@ -90,8 +87,10 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
     // allocate data storage in one big chunk
     numBlocks = numSets * assoc;
     dataBlks = new uint8_t[numBlocks * blkSize];
-
-    dataBlks2 = new uint8_t[numBlocks * writeSize]; //Rakesh - Allocate for two step writes with encoding
+    if(twostep)
+        dataBlks2 = new uint8_t[numBlocks * writeSize]; //Rakesh - Allocate for two step writes with encoding
+    else
+        dataBlks2 = NULL;
 
 	range = 4; // modified by Qi
     unsigned blkIndex = 0;       // index into blks array
@@ -108,8 +107,12 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
             blk->data = &dataBlks[blkSize*blkIndex];
             std::memset(blk->data, 0, blkSize);
 
-            blk->data2= &dataBlks2[writeSize*blkIndex]; //Rakesh - point correctly in mem for encoding
-            std::memset(blk->data2, 0, writeSize);
+            if(twostep) {
+                blk->data2 = &dataBlks2[writeSize*blkIndex]; //Rakesh - point correctly in mem for encoding
+                std::memset(blk->data2, 0, writeSize);
+            }
+            else
+                blk->data2 = NULL;
 
             ++blkIndex;
 
@@ -124,7 +127,10 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
             blk->whenReady = 0;
             blk->isTouched = false;
             blk->size = blkSize;
-            blk->size2 = writeSize; // Rakesh - Not sure if we need it anytime later
+            if(twostep)
+                blk->size2 = writeSize; // Rakesh - Not sure if we need it anytime later
+            else
+                blk->size2 = 0; //Not needed may be we can remove later
             sets[i].blks[j]=blk;
             blk->set = i;
             blk->way = j;
@@ -134,8 +140,9 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
 
 BaseSetAssoc::~BaseSetAssoc()
 {
+    if(twostep)
+        delete [] dataBlks2;
     delete [] dataBlks;
-    delete [] dataBlks2;
     delete [] blks;
     delete [] sets;
 }
