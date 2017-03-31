@@ -73,7 +73,7 @@ class BaseTags : public ClockedObject
     const Cycles accessLatency;
 
     /** Specify if Two Step encoding is employed for edurance of MLC */
-    const bool twostep;
+    const unsigned twostep;
 
     /** Pointer to the parent cache. */
     BaseCache *cache;
@@ -107,9 +107,9 @@ class BaseTags : public ClockedObject
     Stats::Vector totalST;
     Stats::Vector totalHT;
     Stats::Vector totalTT;
-    
+
     Stats::AverageVector avgFlipbits;
-    
+
     Stats::Vector totalFlipbits;
     /** total Number of 4 trans*/
     Stats::Vector lruTrans;

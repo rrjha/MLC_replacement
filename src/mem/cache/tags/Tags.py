@@ -52,7 +52,8 @@ class BaseTags(ClockedObject):
     # Get the hit latency from the parent (cache)
     hit_latency = Param.Cycles(Parent.hit_latency,
                                "The hit latency for this cache")
-    two_step_encoding = Param.Bool(False, "Two step encoding for MLC to increase endurance")
+    # Twostep encoding 0 = Encoding:none, energy:none; 1 = Encoding:all, energy:all; 2 = Enconding:all energy:-writeback; 3 = encoding:-writeback, energy:-writeback
+    two_step_encoding = Param.Unsigned(0, "Two step encoding for MLC to increase endurance")
 
 class BaseSetAssoc(BaseTags):
     type = 'BaseSetAssoc'

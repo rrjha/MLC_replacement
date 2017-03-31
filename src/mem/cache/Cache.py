@@ -64,7 +64,8 @@ class BaseCache(MemObject):
     demand_mshr_reserve = Param.Unsigned(1, "MSHRs reserved for demand access")
     tgts_per_mshr = Param.Unsigned("Max number of accesses per MSHR")
     write_buffers = Param.Unsigned(8, "Number of write buffers")
-    two_step_encoding = Param.Bool(False, "Two step encoding for MLC to increase endurance")
+    # Twostep encoding 0 = Encoding:none, energy:none; 1 = Encoding:all, energy:all; 2 = Enconding:all energy:-writeback; 3 = encoding:-writeback, energy:-writeback
+    two_step_encoding = Param.Unsigned(0, "Two step encoding for MLC to increase endurance")
 
     is_read_only = Param.Bool(False, "Is this cache read only (e.g. inst)")
 

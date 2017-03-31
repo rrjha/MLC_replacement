@@ -195,7 +195,7 @@ class BaseCache : public MemObject
     WriteQueue writeBuffer;
 
     /** Specify if Two Step encoding is employed for edurance of MLC */
-    const bool twostep;
+    const unsigned twostep;
     two_step *m_ts;
 
     /**
@@ -399,7 +399,7 @@ class BaseCache : public MemObject
     Stats::Scalar unusedPrefetches;
 
     /** Total Transitions **/
-    Stats::Scalar totalTrans[MAX_TRANSITION];
+    Stats::Vector totalTrans;
 
     /** Number of blocks written back per thread. */
     Stats::Vector writebacks;
@@ -623,7 +623,7 @@ class BaseCache : public MemObject
 
     }
 
-    bool is_two_step()
+    unsigned is_two_step()
     {
         return twostep;
     }

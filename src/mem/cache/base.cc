@@ -97,7 +97,7 @@ BaseCache::BaseCache(const BaseCacheParams *p, unsigned blk_size)
 
     // forward snoops is overridden in init() once we can query
     // whether the connected master is actually snooping or not
-    if(twostep)
+    if(twostep > 0)
 		m_ts = new two_step(totalTrans);
 }
 
@@ -763,20 +763,11 @@ BaseCache::regStats()
         overallAvgMshrUncacheableLatency.subname(i, system->getMasterName(i));
     }
 
-	totalTrans[ZT]
-		.name(name() + ".ts_total_zt")
-		.desc("Total number of ZTs using Two Step encoding scheme")
+	totalTrans
+		.init(4)
+		.name(name() + ".total_trans")
+		.desc("toal Number of ZT,ST,HT and TT")
 		.flags(total | nonan);
-	totalTrans[ST]
-		.name(name() + ".ts_total_st")
-		.desc("Total number of STs using Two Step encoding scheme")
-		.flags(total | nonan);
-	totalTrans[HT]
-		.name(name() + ".ts_total_ht")
-		.desc("Total number of HTs using Two Step encoding scheme")
-		.flags(total | nonan);
-	totalTrans[TT]
-		.name(name() + ".ts_total_tt")
-		.desc("Total number of TTs using Two Step encoding scheme")
-		.flags(total | nonan);
+
+
 }

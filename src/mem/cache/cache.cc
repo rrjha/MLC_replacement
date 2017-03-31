@@ -174,7 +174,7 @@ Cache::satisfyCpuSideRequest(PacketPtr pkt, CacheBlk *blk,
         // Write or WriteLine at the first cache with block in writable state
         if (blk->checkWrite(pkt)) {
             pkt->writeDataToBlock(blk->data,/* blk->data2,*/ blkSize);
-            if(twostep) {
+            if(twostep > 0) {
                 DPRINTF(CacheVerbose, "%s with two-step write for %s addr %#llx size %d (write)\n",
                 __func__, pkt->cmdString(), pkt->getAddr(), pkt->getSize());
                 m_ts->write_ts_encoded(blk->data2, pkt->getConstPtr<uint8_t>(), blkSize);
@@ -437,11 +437,13 @@ Cache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
         // nothing else to do; writeback doesn't expect response
         assert(!pkt->needsResponse());
         std::memcpy(blk->data, pkt->getConstPtr<uint8_t>(), blkSize);
-        if(twostep) {
-            DPRINTF(CacheVerbose, "%s with two-step encoding for %s addr %#llx size %d\n",
-            __func__, pkt->cmdString(), pkt->getAddr(), pkt->getSize());
-
-            m_ts->write_ts_encoded(blk->data2, pkt->getConstPtr<uint8_t>(), blkSize);
+        if((twostep == 1) || (twostep == 2)){
+            DPRINTF(CacheVerbose, "%s with two-step encoding for writebacks with encoding level %d for %s addr %#llx size %d\n",
+            __func__, twostep, pkt->cmdString(), pkt->getAddr(), pkt->getSize());
+            if(twostep == 1)
+                m_ts->write_ts_encoded(blk->data2, pkt->getConstPtr<uint8_t>(), blkSize); //consider energy from writebacks too
+            else
+                m_ts->write_ts_encoded(blk->data2, pkt->getConstPtr<uint8_t>(), blkSize, true); //don't consider energy from writebacks
         }
 
         DPRINTF(Cache, "%s new state is %s\n", __func__, blk->print());
@@ -1836,7 +1838,7 @@ Cache::handleFill(PacketPtr pkt, CacheBlk *blk, PacketList &writebacks,
         assert(pkt->getSize() == blkSize);
 
         std::memcpy(blk->data, pkt->getConstPtr<uint8_t>(), blkSize);
-        if(twostep) {
+        if(twostep > 0) {
             DPRINTF(CacheVerbose, "%s with two-step encoding for %s addr %#llx size %d\n",
             __func__, pkt->cmdString(), pkt->getAddr(), pkt->getSize());
 

@@ -1,12 +1,11 @@
 #include "two_step.hh"
-
+#include "base.hh"
 dtab_entry two_step::m_decisiontab[64][16];
-Stats::Scalar* two_step::m_transitions;
+//Stats::Scalar* two_step::m_transitions;
 
-two_step::two_step(Stats::Scalar *aScalarArray)
+two_step::two_step(Stats::Vector& trans):m_transitions(trans)
 {
-    //ctor
-    m_transitions = aScalarArray;
+
 
     gen_table();
 }
@@ -14,7 +13,7 @@ two_step::two_step(Stats::Scalar *aScalarArray)
 two_step::~two_step()
 {
     //dtor
-    m_transitions = NULL;
+    //m_transitions = NULL;
 }
 
 
@@ -103,7 +102,7 @@ void two_step::decode (uint32_t fromdata, uint16_t *p_todata) {
 }
 
 
-void two_step::encode(uint16_t todata, uint32_t *p_fromdata){
+void two_step::encode(uint16_t todata, uint32_t *p_fromdata, bool ignore_energy){
     uint32_t i=0, j=0;
     uint32_t result = (*p_fromdata) & 0xFF000000;; //retain MSB
     dtab_entry temp;
@@ -111,20 +110,22 @@ void two_step::encode(uint16_t todata, uint32_t *p_fromdata){
     for(i=0; i<4; i++) { //loop for 4 4-bit nibbles converting them using decision table
         temp = m_decisiontab[((*p_fromdata >> 6*i) & 0x3F)][((todata >> 4*i) & 0xF)];
         result |= (temp.code << 6*i);
-        for(j=0; j < MAX_TRANSITION; j++)
-            m_transitions[j] += temp.transitions[j];
+        if(!ignore_energy) {
+            for(j = 0; j < MAX_TRANSITION; j++)
+                m_transitions[j] += temp.transitions[j];
+        }
     }
     *p_fromdata = result;
 }
 
-void two_step::write_ts_encoded(uint8_t *fromblk, const uint8_t *toblk, uint32_t blksize) {
+void two_step::write_ts_encoded(uint8_t *fromblk, const uint8_t *toblk, uint32_t blksize, bool ignore_energy) {
     int32_t i=0, j=0;
     uint32_t residual = 0;
 
     for(i=0, j=0; i < (blksize-2); i+=2, j+=3)
-        encode(*((uint16_t*)(toblk+i)), (uint32_t*)(fromblk+j));
+        encode(*((uint16_t*)(toblk+i)), (uint32_t*)(fromblk+j), ignore_energy);
     residual |= ((*(fromblk+j+2) << 16) | (*(fromblk+j+1) << 8) | *(fromblk+j)); //last 3 bytes remain
-    encode(*((uint16_t*)(toblk+i)), (uint32_t*)&residual);
+    encode(*((uint16_t*)(toblk+i)), (uint32_t*)&residual, ignore_energy);
     std::memcpy((fromblk+j), &residual, 3);
 }
 
